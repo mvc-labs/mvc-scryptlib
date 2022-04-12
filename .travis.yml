@@ -1,0 +1,29 @@
+dist: bionic
+
+language: node_js
+node_js:
+  - 14
+git:
+  autocrlf: false
+
+os:
+  - linux
+  - osx
+  - windows
+
+#before_install:
+#  - npm i -g npm@latest
+
+script:
+  - npm run getBinary
+  - npm run testlint
+  - npm run cov
+  # integration testing with boilerplate
+  - npm link
+  - git clone -b dev https://github.com/scrypt-sv/boilerplate.git
+  - cd boilerplate
+  - npm install
+  - npm link scryptlib # use this version
+  #- npm ls scryptlib    # double check the latest version is used
+  - npm test
+  - npx scryptlib contracts/demo.scrypt
