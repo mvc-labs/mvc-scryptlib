@@ -1,6 +1,6 @@
 {
   "name": "mvc-scryptlib",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Javascript SDK for integration of Bitcoin SV Smart Contracts written in sCrypt language.",
   "engines": {
     "node": ">=14.0.0"
@@ -33,7 +33,7 @@
     "url": "git+https://github.com/MetaverseChain/mvc-scryptlib.git"
   },
   "keywords": [
-    "mvc",
+    "bsv",
     "sCrypt",
     "Javascript",
     "API"
@@ -64,7 +64,7 @@
     "webpack-cli": "^3.3.11"
   },
   "dependencies": {
-    "mvc-lib": "^1.0.5",
+    "mvc-lib": "^1.0.4",
     "compare-versions": "^3.6.0",
     "json-bigint": "^1.0.0",
     "md5": "^2.2.1",
