@@ -1,7 +1,7 @@
 {
   "name": "mvc-scryptlib",
-  "version": "0.0.1",
-  "description": "Javascript SDK for integration of Bitcoin SV Smart Contracts written in sCrypt language.",
+  "version": "0.0.2",
+  "description": "Javascript SDK for integration of MVC Smart Contracts written in sCrypt language.",
   "engines": {
     "node": ">=14.0.0"
   },
@@ -22,7 +22,8 @@
     "td": "mocha -r ts-node/register 'test/**/*.test.ts' --timeout 600000 -g '' ",
     "pretest": "ts-node test/fixture/autoCompile.ts",
     "prepare": "husky install && npm run compile",
-    "postinstall": "node patches/applyPatch.js",
+    "postinstall": "npm run patch",
+    "patch": "node patches/applyPatch.js",
     "publishcheck": "sh ./publishcheck.sh",
     "prepublishOnly": "npm run publishcheck && npm run lint && npm run compile",
     "getBinary": "node ./util/getBinary.js",
@@ -33,17 +34,17 @@
     "url": "git+https://github.com/MetaverseChain/mvc-scryptlib.git"
   },
   "keywords": [
-    "bsv",
-    "sCrypt",
+    "mvc",
+    "Metaverse Chain",
     "Javascript",
     "API"
   ],
-  "author": "sCrypt.Inc",
+  "author": "MetaverseChain",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/MetaverseChain/mvc-scryptlib/issues"
   },
-  "homepage": "https://github.com/MetaverseChain/mvc-scryptlib#readme",
+  "homepage": "https://github.com/MetaverseChain/mvc-scryptlib",
   "devDependencies": {
     "@types/chai": "^4.2.7",
     "@types/mocha": "^5.2.7",
@@ -64,11 +65,13 @@
     "webpack-cli": "^3.3.11"
   },
   "dependencies": {
+    "@discoveryjs/json-ext": "^0.5.7",
     "mvc-lib": "^1.0.4",
     "compare-versions": "^3.6.0",
     "json-bigint": "^1.0.0",
     "md5": "^2.2.1",
     "node-fetch": "^3.0.0",
-    "patch-package": "^6.4.7"
+    "patch-package": "^6.4.7",
+    "sourcemap-codec": "^1.4.8"
   }
 }
