@@ -113,3 +113,6 @@ boilerplate/
 out/
 
 .DS_Store
+
+# Lockfiles other than package-lock.json
+yarn.lock

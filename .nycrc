@@ -1,31 +1,15 @@
 {
   "cache": false,
   "check-coverage": false,
-  "extension": [
-    ".ts"
-  ],
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "coverage/**",
-    "node_modules/**",
-    "src/test/**",
-    "**/*.d.ts",
-    "**/*.test.ts",
-    "src/index.ts"
-  ],
+  "extension": [".ts"],
+  "include": ["src/**/*.ts"],
+  "exclude": ["coverage/**", "node_modules/**", "src/test/**", "**/*.d.ts", "**/*.test.ts", "src/index.ts"],
   "sourceMap": true,
-  "reporter": [
-    "html",
-    "text",
-    "text-summary"
-  ],
+  "reporter": ["html", "text", "text-summary"],
   "lines": 80,
   "statements": 80,
   "functions": 80,
   "branches": 70,
-  "check-coverage": true,
   "all": true,
   "instrument": true
 }

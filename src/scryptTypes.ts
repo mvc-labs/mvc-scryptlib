@@ -1,25 +1,42 @@
 import {
   parseLiteral, getValidatedHexString, LibraryEntity, intValue2hex, flatternStruct, typeOfArg, isInteger, StructEntity, mvc, checkStructField,
-  checkStruct, toScryptType, inferrType, checkSupportedParamType, toGenericType, typeNameOfArg, parseGenericType, resolveGenericType, librarySign,
+  checkStruct, toScryptType, inferrType, checkSupportedParamType, toGenericType, parseGenericType, resolveGenericType, librarySign,
   isGenericType,
   flatternLibrary,
   arrayToLiteral,
   arrayToScryptType,
   cloneArray,
   canAssignProperty,
-  toHex
+  toHex,
+  int2Value,
+  structSign,
+  arrayToJson
 } from './internal';
 import { serialize, serializeInt } from './serializer';
 
 
+export enum SymbolType {
+  BaseType = 'BaseType',
+  Contract = 'Contract',
+  Library = 'Library',
+  Struct = 'Struct',
+  Unknown = 'Unknown',
+}
+
+
+export type TypeInfo = {
+  finalType: string,
+  symbolType: SymbolType
+};
+
 // A type resolver that can resolve type aliases to final types
-export type TypeResolver = (type: string) => string;
+export type TypeResolver = (type: string) => TypeInfo;
 
 export type ValueType = RawTypes | StructObject | ValueType[];
 
 
 export interface ScryptTypeResolver {
-  resolverType: (type: string) => string;
+  resolverType: (type: string) => TypeInfo;
   resolverClass: (type: string) => typeof ScryptType;
   allTypes: () => Record<string, typeof ScryptType>;
 }
@@ -53,7 +70,7 @@ export class ScryptType {
 
   get finalType(): string {
     if (this._typeResolver)
-      return this._typeResolver(this.type);
+      return this._typeResolver(this.type).finalType;
     return this.type;
   }
 
@@ -70,7 +87,7 @@ export class ScryptType {
   }
 
   toHex(): string {
-    return this.serialize();
+    return mvc.Script.fromASM(this._asm).toHex();
   }
 
   toString(format: string): string {
@@ -108,8 +125,6 @@ export class ScryptType {
     return '';
   }
 
-
-
   clone(): ScryptType {
     return Object.assign(Object.create(this), {
       _value: this.value
@@ -143,8 +158,19 @@ export class Int extends ScryptType {
   toJSON(): string | unknown {
     return this.value;
   }
-  public serialize(): string {
+
+  serialize(): string {
     return serializeInt(this.value as string);
+  }
+
+  toNumber(): number | string {
+    if (typeof this._value === 'number') {
+      return this._value;
+    } else if (typeof this._value === 'bigint') {
+      return int2Value(this._value.toString());
+    }
+
+    return int2Value(this.value as string);
   }
 
 }
@@ -486,6 +512,7 @@ export class OpCodeType extends ScryptType {
 export class Struct extends ScryptType {
 
   sorted = false;
+  private inferredTypes: Record<string, string> = {};
 
   public static structAst: StructEntity;
   constructor(o: StructObject) {
@@ -504,8 +531,26 @@ export class Struct extends ScryptType {
     return flatternStruct(this, varName);
   }
 
-  protected init(structAst: StructEntity): void {
-    checkStruct(structAst, this, this._typeResolver);
+  toHex(): string {
+
+    if (!this.sorted) {
+      throw 'unbinded Struct can\'t call toHex';
+    }
+
+    return flatternStruct(this, '').map(v => {
+      return (v.value as ScryptType).toHex();
+    }).join('');
+  }
+
+  protected init(): void {
+    checkStruct(Struct.getStructAst(this), this);
+    this.inferrTypesByValue();
+    const structAst = this.getStructAst();
+    structAst.params.forEach(p => {
+      const member = this.memberByKey(p.name);
+      checkStructField(structAst, p, member, this._typeResolver);
+    });
+
     const ordered = {};
     const unordered = this.value;
     Object.keys(this.value).sort((a: string, b: string) => {
@@ -524,8 +569,8 @@ export class Struct extends ScryptType {
   }
 
   protected bind(): void {
-    this.init(Struct.getStructAst(this));
-    const structAst = Struct.getStructAst(this);
+    this.init();
+    const structAst = this.getStructAst();
     structAst.params.forEach(p => {
       Object.defineProperty(this, p.name, {
         get() {
@@ -538,6 +583,92 @@ export class Struct extends ScryptType {
       });
     });
 
+  }
+
+  getStructAst(): StructEntity {
+    const structAst = Struct.getStructAst(this);
+    return {
+      name: structAst.name,
+      params: structAst.params.map(p => ({
+        name: p.name,
+        type: resolveGenericType(this.inferredTypes, p.type)
+      })),
+      genericTypes: (structAst.genericTypes || []).map(t => t)
+    };
+  }
+
+  private inferrTypesByValue(): void {
+    const value = this.value as StructObject;
+    const structAst = this.getStructAst();
+    structAst.params.forEach((p) => {
+      const argType = inferrType(value[p.name]);
+      if (structAst.genericTypes.includes(p.type)) {
+
+        if (this.inferredTypes[p.type]) {
+          if (this.inferredTypes[p.type] != argType) {
+            throw new Error(`The type of ${structAst.name} is wrong, expected ${structSign(structAst)} but got ${JSON.stringify(value)}`);
+          }
+        } else {
+          Object.assign(this.inferredTypes, {
+            [p.type]: argType
+          });
+        }
+      } else if (isGenericType(p.type)) {
+        if (structAst.genericTypes.length > 0) {
+          if (!isGenericType(argType)) {
+            throw new Error(`The type of ${structAst.name} is wrong, expected ${structSign(structAst)} but got ${JSON.stringify(value)}`);
+          }
+
+          const [_, argGenericTypes] = parseGenericType(argType);
+          const [__, paramGenericTypes] = parseGenericType(p.type);
+
+          paramGenericTypes.forEach((t, index) => {
+            if (this.inferredTypes[t]) {
+              if (this.inferredTypes[t] != argGenericTypes[index]) {
+                throw new Error(`The type of ${structAst.name} is wrong, expected ${structSign(structAst)} but got ${JSON.stringify(value)}`);
+              }
+            } else {
+              Object.assign(this.inferredTypes, {
+                [t]: argGenericTypes[index]
+              });
+            }
+          });
+        }
+      }
+    });
+  }
+
+  public inferrTypesByAssign(assignType: string): boolean {
+
+    if (!Struct.hasGeneric(this)) {
+      return false;
+    }
+
+    const [struct, genericTypes] = parseGenericType(assignType);
+
+    const structAst = this.getStructAst();
+
+    if (structAst.name !== struct)
+      return false;
+
+    if (structAst.genericTypes.length !== genericTypes.length)
+      return false;
+
+    let succces = true;
+    structAst.genericTypes.forEach((t, index) => {
+      const realT = genericTypes[index];
+      if (this.inferredTypes[t]) {
+        if (this.inferredTypes[t] != realT) {
+          succces = false;
+        }
+      } else {
+        Object.assign(this.inferredTypes, {
+          [t]: realT
+        });
+      }
+    });
+
+    return succces;
   }
 
   toASM(): string {
@@ -593,7 +724,7 @@ export class Struct extends ScryptType {
    * Get the member type declared by the structure by structAst
    */
   getMemberAstFinalType(key: string): string {
-    const structAst = Struct.getStructAst(this);
+    const structAst = this.getStructAst();
     const paramEntity = structAst.params.find(p => {
       return p.name === key;
     });
@@ -602,7 +733,7 @@ export class Struct extends ScryptType {
       throw new Error(`${key} is member of struct ${structAst.name}`);
     }
 
-    return this._typeResolver(paramEntity.type);
+    return this._typeResolver(paramEntity.type).finalType;
   }
 
 
@@ -662,7 +793,7 @@ export class Struct extends ScryptType {
         if (Struct.isStruct(v[key])) {
           return Object.assign(obj, { [key]: (v[key] as ScryptType).toJSON() });
         } else if (Array.isArray(v[key])) {
-          return Object.assign(obj, { [key]: JSON.stringify(v[key]) });
+          return Object.assign(obj, { [key]: arrayToJson(v[key]) });
         } else {
           return Object.assign(obj, { [key]: (v[key] as ScryptType).toLiteral() });
         }
@@ -679,6 +810,25 @@ export class Struct extends ScryptType {
   }
   public serialize(): string {
     return serialize(this.value as string);
+  }
+
+  static hasGeneric(self: Struct): boolean {
+    const ast: StructEntity = Struct.getStructAst(self) as StructEntity;
+    return (ast.genericTypes || []).length > 0;
+  }
+
+  get finalType(): string {
+    if (this._typeResolver) {
+      if (Struct.hasGeneric(this)) {
+        const structAst = this.getStructAst();
+        const type = toGenericType(this.type, structAst.genericTypes.map(t => (this.inferredTypes[t] || t)));
+        return this._typeResolver(type).finalType;
+      } else {
+        return this._typeResolver(this.type).finalType;
+      }
+    }
+
+    return this.type;
   }
 }
 
@@ -779,17 +929,6 @@ export class Library extends ScryptType {
     return flatternLibrary(this, varName);
   }
 
-  get finalType(): string {
-    if (Library.hasGeneric(this)) {
-      const libraryAst = this.getLibraryAst();
-      const type = toGenericType(this.type, libraryAst.genericTypes.map(t => (this.inferredTypes[t] || t)));
-      return type;
-    }
-    if (this._typeResolver)
-      return this._typeResolver(this.type);
-    return this.type;
-  }
-
   checkValue(args: SupportedParamType[]): ValueType {
     const libraryAst = Library.getLibraryAst(this);
     if (libraryAst.params.length !== args.length) {
@@ -798,7 +937,7 @@ export class Library extends ScryptType {
     return args;
   }
 
-  private inferrTypesByCtorArgs(): void {
+  private inferrTypesByValue(): void {
     const args = this.value as SupportedParamType[];
     const libraryAst = this.getLibraryAst();
     libraryAst.params.forEach((p, index) => {
@@ -911,7 +1050,7 @@ export class Library extends ScryptType {
   }
 
   protected bind(): void {
-    this.inferrTypesByCtorArgs();
+    this.inferrTypesByValue();
     this.attach();
   }
 
@@ -924,7 +1063,7 @@ export class Library extends ScryptType {
   toJSON(): unknown {
     return Array.from(Object.values(this.value)).map(v => {
       if (Array.isArray(v)) {
-        return JSON.stringify(v);
+        return arrayToJson(v);
       } else {
         return toScryptType(v).toJSON();
       }
@@ -933,6 +1072,20 @@ export class Library extends ScryptType {
 
   toLiteral(): string {
     return arrayToLiteral(this.value as SupportedParamType[]);
+  }
+
+  get finalType(): string {
+    if (this._typeResolver) {
+      if (Library.hasGeneric(this)) {
+        const libraryAst = this.getLibraryAst();
+        const type = toGenericType(this.type, libraryAst.genericTypes.map(t => (this.inferredTypes[t] || t)));
+        return this._typeResolver(type).finalType;
+      } else {
+        return this._typeResolver(this.type).finalType;
+      }
+    }
+
+    return this.type;
   }
 }
 
@@ -943,7 +1096,7 @@ export class HashedMap extends Library {
     this.setProperties({
       '_data': data
     });
-    this._typeResolver = (t: string) => t; //we should assign this before bind
+    this._typeResolver = (t: string) => ({ finalType: t, symbolType: SymbolType.Library }); //we should assign this before bind
     this.bind();
   }
 }
@@ -975,7 +1128,7 @@ export class HashedSet extends Library {
     this.setProperties({
       '_data': data
     });
-    this._typeResolver = (t: string) => t; //we should assign this before bind
+    this._typeResolver = (t: string) => ({ finalType: t, symbolType: SymbolType.Library }); //we should assign this before bind
     this.bind();
   }
 }
@@ -998,7 +1151,30 @@ HashedSet.libraryAst = {
 } as LibraryEntity;
 
 
-export type PrimitiveTypes = Int | Bool | Bytes | PrivKey | PubKey | Sig | Sha256 | Sha1 | SigHashType | Ripemd160 | OpCodeType | Struct;
+export class SortedItem extends Struct {
+  constructor(data: any) {
+    super(data);
+    this._typeResolver = (t: string) => ({ finalType: t, symbolType: SymbolType.Struct }); //we should assign this before bind
+    this.bind();
+  }
+}
+
+SortedItem.structAst = {
+  name: 'SortedItem',
+  params: [
+    {
+      name: 'item',
+      type: 'T'
+    },
+    {
+      name: 'idx',
+      type: 'int'
+    }
+  ],
+  genericTypes: ['T']
+} as StructEntity;
+
+export type PrimitiveTypes = Int | Bool | Bytes | PrivKey | PubKey | Sig | Sha256 | Sha1 | SigHashType | Ripemd160 | OpCodeType | Struct | Library;
 
 export type RawTypes = boolean | number | bigint | string;
 
