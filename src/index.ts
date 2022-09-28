@@ -10,7 +10,7 @@ export {
   handleCompilerOutput,
   compileContractAsync,
   CompilingSettings,
-} from './internal'
+} from './internal';
 
 export {
   mvc,
@@ -83,7 +83,7 @@ export {
   path2uri,
   uri2path,
   parseStateHex,
-} from './internal'
+} from './internal';
 
 export {
   Int,
@@ -138,7 +138,7 @@ export {
   HashedMap,
   HashedSet,
   SymbolType,
-} from './internal'
+} from './internal';
 
 //Equivalent to the built-in functions
 export {
@@ -153,8 +153,8 @@ export {
   toHashedSet,
   writeVarint,
   toLEUnsigned,
-} from './internal'
-export { serializeState, deserializeState, STATE_LEN_2BYTES, STATE_LEN_4BYTES, serialize } from './internal'
-export { getPlatformScryptc, findCompiler } from './internal'
+} from './internal';
+export { serializeState, deserializeState, STATE_LEN_2BYTES, STATE_LEN_4BYTES, serialize } from './internal';
+export { getPlatformScryptc, findCompiler } from './internal';
 
-export { partialSha256, sha256ByPartialHash } from './internal'
+export { partialSha256, sha256ByPartialHash } from './internal';
