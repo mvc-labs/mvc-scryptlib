@@ -2,7 +2,7 @@
 
 var spec = {
   name: 'ECIES',
-  message: 'Internal Error on mvc-ecies Module {0}',
+  message: 'Internal Error on bsv-ecies Module {0}',
   errors: [{
     name: 'DecryptionError',
     message: 'Invalid Message: {0}'

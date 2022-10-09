@@ -1,6 +1,6 @@
 {
   "name": "mvc-scrypt",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "description": "Javascript SDK for integration of MVC Smart Contracts written in sCrypt language.",
   "engines": {
     "node": ">=14.0.0"

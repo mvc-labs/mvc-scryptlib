@@ -189,7 +189,20 @@ MerkleBlock.prototype.filteredTxsHash = function filteredTxsHash () {
   return txs
 }
 
-
+/**
+ * Traverse a the tree in this MerkleBlock, validating it along the way
+ * Modeled after Bitcoin Core merkleblock.cpp TraverseAndExtract()
+ * @param {Number} - depth - Current height
+ * @param {Number} - pos - Current position in the tree
+ * @param {Object} - opts - Object with values that need to be mutated throughout the traversal
+ * @param {Boolean} - checkForTxs - if true return opts.txs else return the Merkle Hash
+ * @param {Number} - opts.flagBitsUsed - Number of flag bits used, should start at 0
+ * @param {Number} - opts.hashesUsed - Number of hashes used, should start at 0
+ * @param {Array} - opts.txs - Will finish populated by transactions found during traversal that match the filter
+ * @returns {Buffer|null} - Buffer containing the Merkle Hash for that height
+ * @returns {Array} - transactions found during traversal that match the filter
+ * @private
+ */
 MerkleBlock.prototype._traverseMerkleTree = function traverseMerkleTree (depth, pos, opts, checkForTxs) {
   opts = opts || {}
   opts.txs = opts.txs || []
@@ -224,7 +237,12 @@ MerkleBlock.prototype._traverseMerkleTree = function traverseMerkleTree (depth, 
   }
 }
 
-
+/** Calculates the width of a merkle tree at a given height.
+ *  Modeled after Bitcoin Core merkleblock.h CalcTreeWidth()
+ * @param {Number} - Height at which we want the tree width
+ * @returns {Number} - Width of the tree at a given height
+ * @private
+ */
 MerkleBlock.prototype._calcTreeWidth = function calcTreeWidth (height) {
   return (this.numTransactions + (1 << height) - 1) >> height
 }

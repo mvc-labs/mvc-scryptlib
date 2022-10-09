@@ -37,7 +37,17 @@ Hash.sha256 = function (buf) {
 
 Hash.sha256.blocksize = 512
 
-
+/**
+ * A double SHA256 hash, which is always 256 bits or 32 bytes bytes long. This
+ * hash function is commonly used inside Bitcoin, particularly for the hash of a
+ * block and the hash of a transaction.
+ *
+ * See:
+ * https://www.movable-type.co.uk/scripts/sha256.html
+ *
+ * @param {Buffer} buf Data, a.k.a. pre-image, which can be any size.
+ * @returns {Buffer} The hash in the form of a buffer.
+ */
 Hash.sha256sha256 = function (buf) {
   $.checkArgument(Buffer.isBuffer(buf))
   return Hash.sha256(Hash.sha256(buf))
@@ -56,7 +66,17 @@ Hash.ripemd160 = function (buf) {
   $.checkArgument(Buffer.isBuffer(buf))
   return crypto.createHash('ripemd160').update(buf).digest()
 }
-
+/**
+ * A RIPEMD160 hash of a SHA256 hash, which is always 160 bits or 20 bytes long.
+ * This value is commonly used inside Bitcoin, particularly for Bitcoin
+ * addresses.
+ *
+ * See:
+ * https://en.wikipedia.org/wiki/RIPEMD
+ *
+ * @param {Buffer} buf Data, a.k.a. pre-image, which can be any size.
+ * @returns {Buffer} The hash in the form of a buffer.
+ */
 Hash.sha256ripemd160 = function (buf) {
   $.checkArgument(Buffer.isBuffer(buf))
   return Hash.ripemd160(Hash.sha256(buf))

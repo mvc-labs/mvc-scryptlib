@@ -1,4 +1,4 @@
-var mvc = require('../../')
-mvc.Message = require('./message')
+var bsv = require('../../')
+bsv.Message = require('./message')
 
-module.exports = mvc.Message
+module.exports = bsv.Message

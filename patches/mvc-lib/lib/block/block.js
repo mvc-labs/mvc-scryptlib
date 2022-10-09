@@ -192,6 +192,12 @@ Block.prototype.getTransactionHashes = function getTransactionHashes () {
   return hashes
 }
 
+/**
+ * Will build a merkle tree of all the transactions, ultimately arriving at
+ * a single point, the merkle root.
+ * @link https://en.bitcoin.it/wiki/Protocol_specification#Merkle_Trees
+ * @returns {Array} - An array with each level of the tree after the other.
+ */
 Block.prototype.getMerkleTree = function getMerkleTree () {
   var tree = this.getTransactionHashes()
 

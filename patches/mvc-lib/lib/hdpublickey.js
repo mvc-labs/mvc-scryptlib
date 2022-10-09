@@ -12,9 +12,9 @@ var Network = require('./networks')
 var Point = require('./crypto/point')
 var PublicKey = require('./publickey')
 
-var mvcErrors = require('./errors')
-var errors = mvcErrors
-var hdErrors = mvcErrors.HDPublicKey
+var bsvErrors = require('./errors')
+var errors = bsvErrors
+var hdErrors = bsvErrors.HDPublicKey
 var assert = require('assert')
 
 var JSUtil = require('./util/js')

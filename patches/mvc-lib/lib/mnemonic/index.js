@@ -1,4 +1,4 @@
-var mvc = require('../../')
-mvc.Mnemonic = require('./mnemonic')
+var bsv = require('../../')
+bsv.Mnemonic = require('./mnemonic')
 
-module.exports = mvc.Mnemonic
+module.exports = bsv.Mnemonic

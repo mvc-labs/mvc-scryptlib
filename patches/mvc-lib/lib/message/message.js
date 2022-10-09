@@ -1,16 +1,16 @@
 'use strict'
 
-var mvc = require('../../')
-var _ = mvc.deps._
-var PrivateKey = mvc.PrivateKey
-var PublicKey = mvc.PublicKey
-var Address = mvc.Address
-var BufferWriter = mvc.encoding.BufferWriter
-var ECDSA = mvc.crypto.ECDSA
-var Signature = mvc.crypto.Signature
-var sha256sha256 = mvc.crypto.Hash.sha256sha256
-var JSUtil = mvc.util.js
-var $ = mvc.util.preconditions
+var bsv = require('../../')
+var _ = bsv.deps._
+var PrivateKey = bsv.PrivateKey
+var PublicKey = bsv.PublicKey
+var Address = bsv.Address
+var BufferWriter = bsv.encoding.BufferWriter
+var ECDSA = bsv.crypto.ECDSA
+var Signature = bsv.crypto.Signature
+var sha256sha256 = bsv.crypto.Hash.sha256sha256
+var JSUtil = bsv.util.js
+var $ = bsv.util.preconditions
 
 /**
  * constructs a new message to sign and verify.
