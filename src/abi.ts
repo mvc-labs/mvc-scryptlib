@@ -12,10 +12,10 @@ import {
   flatternCtorArgs,
   flatternParams,
   bin2num,
-} from './utils'
-import { AbstractContract, TxContext, VerifyResult, AsmVarValues } from './contract'
-import { ScryptType, Bool, Int, SupportedParamType, ScryptTypeResolver } from './scryptTypes'
-import { ABIEntityType, ABIEntity, ParamEntity } from './compilerWrapper'
+} from './utils';
+import { AbstractContract, TxContext, VerifyResult, AsmVarValues } from './contract';
+import { ScryptType, Bool, Int, SupportedParamType, ScryptTypeResolver } from './scryptTypes';
+import { ABIEntityType, ABIEntity, ParamEntity } from './compilerWrapper';
 
 export type Script = mvc.Script
 
@@ -60,15 +60,15 @@ export class FunctionCall {
   private _lockingScript?: Script
 
   get unlockingScript(): Script | undefined {
-    return this._unlockingScript
+    return this._unlockingScript;
   }
 
   get lockingScript(): Script | undefined {
-    return this._lockingScript
+    return this._lockingScript;
   }
 
   set lockingScript(s: Script | undefined) {
-    this._lockingScript = s
+    this._lockingScript = s;
   }
 
   constructor(
@@ -81,73 +81,73 @@ export class FunctionCall {
     },
   ) {
     if (binding.lockingScript === undefined && binding.unlockingScript === undefined) {
-      throw new Error('param binding.lockingScript & binding.unlockingScript cannot both be empty')
+      throw new Error('param binding.lockingScript & binding.unlockingScript cannot both be empty');
     }
 
-    this.contract = binding.contract
+    this.contract = binding.contract;
 
-    this.args = binding.args
+    this.args = binding.args;
 
     if (binding.lockingScript) {
-      this._lockingScript = binding.lockingScript
+      this._lockingScript = binding.lockingScript;
     }
 
     if (binding.unlockingScript) {
-      this._unlockingScript = binding.unlockingScript
+      this._unlockingScript = binding.unlockingScript;
     }
   }
 
   toASM(): string {
-    return this.toScript().toASM()
+    return this.toScript().toASM();
   }
 
   toString(): string {
-    return this.toHex()
+    return this.toHex();
   }
 
   toScript(): Script {
     if (this.lockingScript) {
-      return this.lockingScript
+      return this.lockingScript;
     } else {
-      return this.unlockingScript
+      return this.unlockingScript;
     }
   }
 
   toHex(): string {
-    return this.toScript().toHex()
+    return this.toScript().toHex();
   }
 
   genLaunchConfig(txContext?: TxContext): FileUri {
-    const constructorArgs: SupportedParamType[] = this.contract.ctorArgs().map((p) => p.value)
-    const pubFuncArgs: SupportedParamType[] = this.args.map((arg) => arg.value)
-    const pubFunc: string = this.methodName
-    const name = `Debug ${this.contract.contractName}`
-    const program = `${this.contract.file}`
+    const constructorArgs: SupportedParamType[] = this.contract.ctorArgs().map((p) => p.value);
+    const pubFuncArgs: SupportedParamType[] = this.args.map((arg) => arg.value);
+    const pubFunc: string = this.methodName;
+    const name = `Debug ${this.contract.contractName}`;
+    const program = `${this.contract.file}`;
 
-    const asmArgs: AsmVarValues = this.contract.asmArgs || {}
+    const asmArgs: AsmVarValues = this.contract.asmArgs || {};
 
     const state: string =
-      !AbstractContract.isStateful(this.contract) && this.contract.dataPart ? this.contract.dataPart.toASM() : undefined
-    const txCtx: TxContext = Object.assign({}, this.contract.txContext || {}, txContext || {}, { opReturn: state })
+      !AbstractContract.isStateful(this.contract) && this.contract.dataPart ? this.contract.dataPart.toASM() : undefined;
+    const txCtx: TxContext = Object.assign({}, this.contract.txContext || {}, txContext || {}, { opReturn: state });
     if (AbstractContract.isStateful(this.contract)) {
-      Object.assign(txCtx, { opReturnHex: this.contract.dataPart.toHex() })
+      Object.assign(txCtx, { opReturnHex: this.contract.dataPart.toHex() });
     } else if (this.contract.dataPart) {
-      Object.assign(txCtx, { opReturn: this.contract.dataPart.toASM() })
+      Object.assign(txCtx, { opReturn: this.contract.dataPart.toASM() });
     }
 
-    return genLaunchConfigFile(constructorArgs, pubFuncArgs, pubFunc, name, program, txCtx, asmArgs)
+    return genLaunchConfigFile(constructorArgs, pubFuncArgs, pubFunc, name, program, txCtx, asmArgs);
   }
 
   verify(txContext?: TxContext): VerifyResult {
-    const result = this.contract.run_verify(this.unlockingScript.toASM() || '', txContext)
+    const result = this.contract.run_verify(this.unlockingScript.toASM() || '', txContext);
 
     if (!result.success) {
-      const debugUrl = this.genLaunchConfig(txContext)
+      const debugUrl = this.genLaunchConfig(txContext);
       if (debugUrl) {
-        result.error = result.error + `\t[Launch Debugger](${debugUrl.replace(/file:/i, 'scryptlaunch:')})\n`
+        result.error = result.error + `\t[Launch Debugger](${debugUrl.replace(/file:/i, 'scryptlaunch:')})\n`;
       }
     }
-    return result
+    return result;
   }
 }
 
@@ -158,20 +158,20 @@ export class ABICoder {
     if (args.length !== params.length) {
       throw new Error(
         `wrong number of arguments for '${contractname}.${funname}', expected ${params.length} but got ${args.length}`,
-      )
+      );
     }
 
     params.forEach((param, index) => {
-      const arg = args[index]
-      const error = checkSupportedParamType(arg, param, this.resolver.resolverType)
-      if (error) throw error
-    })
+      const arg = args[index];
+      const error = checkSupportedParamType(arg, param, this.resolver.resolverType);
+      if (error) throw error;
+    });
   }
 
   encodeConstructorCall(contract: AbstractContract, hexTemplate: string, ...args: SupportedParamType[]): FunctionCall {
-    const constructorABI = this.abi.filter((entity) => entity.type === ABIEntityType.CONSTRUCTOR)[0]
-    const cParams = constructorABI?.params || []
-    this.checkArgs(contract.contractName, 'constructor', cParams, ...args)
+    const constructorABI = this.abi.filter((entity) => entity.type === ABIEntityType.CONSTRUCTOR)[0];
+    const cParams = constructorABI?.params || [];
+    this.checkArgs(contract.contractName, 'constructor', cParams, ...args);
 
     // handle array type
     const flatteredArgs = flatternCtorArgs(
@@ -184,21 +184,21 @@ export class ABICoder {
         ),
       ),
       this.resolver.resolverType,
-    )
+    );
 
     flatteredArgs.forEach((arg) => {
       if (!hexTemplate.includes(`<${arg.name}>`)) {
-        throw new Error(`abi constructor params mismatch with args provided: missing ${arg.name} in ASM tempalte`)
+        throw new Error(`abi constructor params mismatch with args provided: missing ${arg.name} in ASM tempalte`);
       }
 
-      contract.hexTemplateArgs.set(`<${arg.name}>`, this.encodeParam(arg.value, arg))
-    })
+      contract.hexTemplateArgs.set(`<${arg.name}>`, this.encodeParam(arg.value, arg));
+    });
 
-    contract.hexTemplateArgs.set('<__codePart__>', '00')
+    contract.hexTemplateArgs.set('<__codePart__>', '00');
 
-    contract.statePropsArgs = buildDefaultStateProps(contract)
+    contract.statePropsArgs = buildDefaultStateProps(contract);
 
-    const lockingScript = buildContractCode(contract.hexTemplateArgs, contract.hexTemplateInlineASM, hexTemplate)
+    const lockingScript = buildContractCode(contract.hexTemplateArgs, contract.hexTemplateInlineASM, hexTemplate);
 
     return new FunctionCall('constructor', {
       contract,
@@ -208,84 +208,84 @@ export class ABICoder {
         type: param.type,
         value: args[index],
       })),
-    })
+    });
   }
 
   encodeConstructorCallFromRawHex(contract: AbstractContract, hexTemplate: string, raw: string): FunctionCall {
-    const script = mvc.Script.fromHex(raw)
-    const constructorABI = this.abi.filter((entity) => entity.type === ABIEntityType.CONSTRUCTOR)[0]
-    const cParams = constructorABI?.params || []
+    const script = mvc.Script.fromHex(raw);
+    const constructorABI = this.abi.filter((entity) => entity.type === ABIEntityType.CONSTRUCTOR)[0];
+    const cParams = constructorABI?.params || [];
 
-    let offset = 0
+    let offset = 0;
 
-    let dataPartInHex: string | undefined = undefined
+    let dataPartInHex: string | undefined = undefined;
     for (let index = 0; index < script.chunks.length; index++) {
-      const chunk = script.chunks[index]
+      const chunk = script.chunks[index];
 
       if (offset >= hexTemplate.length && chunk.opcodenum == 106 /*OP_RETURN*/) {
-        const b = mvc.Script.fromChunks(script.chunks.slice(index + 1))
+        const b = mvc.Script.fromChunks(script.chunks.slice(index + 1));
 
-        dataPartInHex = b.toHex()
-        break
+        dataPartInHex = b.toHex();
+        break;
       } else if (hexTemplate.charAt(offset) == '<') {
-        const start = offset
+        const start = offset;
 
-        let found = false
+        let found = false;
         while (!found && offset < hexTemplate.length) {
-          offset++
+          offset++;
           if (hexTemplate.charAt(offset) == '>') {
-            offset++
-            found = true
+            offset++;
+            found = true;
           }
         }
 
         if (!found) {
-          throw new Error('cannot found break >')
+          throw new Error('cannot found break >');
         }
 
-        const name = hexTemplate.substring(start, offset)
+        const name = hexTemplate.substring(start, offset);
 
-        const bw = new mvc.encoding.BufferWriter()
+        const bw = new mvc.encoding.BufferWriter();
 
-        bw.writeUInt8(chunk.opcodenum)
+        bw.writeUInt8(chunk.opcodenum);
         if (chunk.buf) {
           if (chunk.opcodenum < mvc.Opcode.OP_PUSHDATA1) {
-            bw.write(chunk.buf)
+            bw.write(chunk.buf);
           } else if (chunk.opcodenum === mvc.Opcode.OP_PUSHDATA1) {
-            bw.writeUInt8(chunk.len)
-            bw.write(chunk.buf)
+            bw.writeUInt8(chunk.len);
+            bw.write(chunk.buf);
           } else if (chunk.opcodenum === mvc.Opcode.OP_PUSHDATA2) {
-            bw.writeUInt16LE(chunk.len)
-            bw.write(chunk.buf)
+            bw.writeUInt16LE(chunk.len);
+            bw.write(chunk.buf);
           } else if (chunk.opcodenum === mvc.Opcode.OP_PUSHDATA4) {
-            bw.writeUInt32LE(chunk.len)
-            bw.write(chunk.buf)
+            bw.writeUInt32LE(chunk.len);
+            bw.write(chunk.buf);
           }
         }
 
         if (name.startsWith(`<${contract.contractName}.`)) {
           //inline asm
-          contract.hexTemplateInlineASM.set(name, bw.toBuffer().toString('hex'))
+          contract.hexTemplateInlineASM.set(name, bw.toBuffer().toString('hex'));
         } else {
-          contract.hexTemplateArgs.set(name, bw.toBuffer().toString('hex'))
+          contract.hexTemplateArgs.set(name, bw.toBuffer().toString('hex'));
         }
       } else {
-        const op = hexTemplate.substring(offset, offset + 2)
+        const op = hexTemplate.substring(offset, offset + 2);
 
-        offset = offset + 2
+        offset = offset + 2;
 
         if (parseInt(op, 16) != chunk.opcodenum) {
-          throw new Error(`the raw script cannot match the ASM template of contract ${contract.contractName}`)
+          throw new Error(`the raw script cannot match the ASM template of contract ${contract.contractName}`);
         }
 
         if (chunk.len > 0) {
-          const data = hexTemplate.substring(offset, offset + chunk.len * 2)
+          const data = hexTemplate.substring(offset, offset + chunk.len * 2);
 
           if (chunk.buf.toString('hex') != data) {
-            throw new Error(`the raw script cannot match the ASM template of contract ${contract.contractName}`)
+            throw new Error(`the raw script cannot match the ASM template of contract ${contract.contractName}`);
           }
 
-          offset = offset + chunk.len * 2
+          offset = offset + chunk.len * 2;
         }
       }
     }
@@ -298,44 +298,44 @@ export class ABICoder {
         }),
         contract.hexTemplateArgs,
       ),
-    )
+    );
 
     if (AbstractContract.isStateful(contract)) {
-      const scriptHex = dataPartInHex
-      const metaScript = dataPartInHex.substr(scriptHex.length - 10, 10)
-      const version = bin2num(metaScript.substr(metaScript.length - 2, 2)) as number
+      const scriptHex = dataPartInHex;
+      const metaScript = dataPartInHex.substr(scriptHex.length - 10, 10);
+      const version = bin2num(metaScript.substr(metaScript.length - 2, 2)) as number;
 
       switch (version) {
         case 0:
           {
-            const [firstCall, args] = parseStateHex(contract, scriptHex)
-            contract.statePropsArgs = args
-            contract.firstCall = firstCall
+            const [firstCall, args] = parseStateHex(contract, scriptHex);
+            contract.statePropsArgs = args;
+            contract.firstCall = firstCall;
           }
-          break
+          break;
       }
     } else if (dataPartInHex) {
-      contract.setDataPartInHex(dataPartInHex)
+      contract.setDataPartInHex(dataPartInHex);
     }
 
-    return new FunctionCall('constructor', { contract, lockingScript: script, args: ctorArgs })
+    return new FunctionCall('constructor', { contract, lockingScript: script, args: ctorArgs });
   }
 
   encodePubFunctionCall(contract: AbstractContract, name: string, args: SupportedParamType[]): FunctionCall {
     for (const entity of this.abi) {
       if (entity.name === name) {
-        this.checkArgs(contract.contractName, name, entity.params, ...args)
+        this.checkArgs(contract.contractName, name, entity.params, ...args);
         let hex = this.encodeParams(
           args,
           entity.params.map((p) => ({
             name: p.name,
             type: this.resolver.resolverType(p.type).finalType,
           })),
-        )
+        );
         if (this.abi.length > 2 && entity.index !== undefined) {
           // selector when there are multiple public functions
-          const pubFuncIndex = entity.index
-          hex += `${mvc.Script.fromASM(int2Asm(pubFuncIndex.toString())).toHex()}`
+          const pubFuncIndex = entity.index;
+          hex += `${mvc.Script.fromASM(int2Asm(pubFuncIndex.toString())).toHex()}`;
         }
         return new FunctionCall(name, {
           contract,
@@ -345,11 +345,11 @@ export class ABICoder {
             type: param.type,
             value: args[index],
           })),
-        })
+        });
       }
     }
 
-    throw new Error(`no public function named '${name}' found in contract '${contract.contractName}'`)
+    throw new Error(`no public function named '${name}' found in contract '${contract.contractName}'`);
   }
 
   /**
@@ -360,34 +360,34 @@ export class ABICoder {
    * @returns a FunctionCall which contains the function parameters that have been deserialized
    */
   encodePubFunctionCallFromHex(contract: AbstractContract, name: string, hex: string): FunctionCall {
-    const script = mvc.Script.fromHex(hex)
-    const entity = this.abi.filter((entity) => entity.type === 'function' && entity.name === name)[0]
+    const script = mvc.Script.fromHex(hex);
+    const entity = this.abi.filter((entity) => entity.type === 'function' && entity.name === name)[0];
     if (!entity) {
-      throw new Error(`no public function named '${name}' found in contract '${contract.contractName}'`)
+      throw new Error(`no public function named '${name}' found in contract '${contract.contractName}'`);
     }
-    const cParams = entity?.params || []
+    const cParams = entity?.params || [];
 
-    const flatternArgs = flatternParams(cParams, contract.resolver)
+    const flatternArgs = flatternParams(cParams, contract.resolver);
 
-    let fArgsLen = flatternArgs.length
+    let fArgsLen = flatternArgs.length;
     if (this.abi.length > 2 && entity.index !== undefined) {
-      fArgsLen += 1
+      fArgsLen += 1;
     }
 
-    const usASM = script.toASM()
-    const asmOpcodes = usASM.split(' ')
+    const usASM = script.toASM();
+    const asmOpcodes = usASM.split(' ');
 
     if (fArgsLen != asmOpcodes.length) {
       throw new Error(
         `the raw unlockingScript cannot match the arguments of public function ${name} of contract ${contract.contractName}`,
-      )
+      );
     }
 
-    const hexTemplateArgs: Map<string, string> = new Map()
+    const hexTemplateArgs: Map<string, string> = new Map();
 
     flatternArgs.forEach((farg, index) => {
-      hexTemplateArgs.set(`<${farg.name}>`, mvc.Script.fromASM(asmOpcodes[index]).toHex())
-    })
+      hexTemplateArgs.set(`<${farg.name}>`, mvc.Script.fromASM(asmOpcodes[index]).toHex());
+    });
 
     const args: Arguments = cParams.map((param) =>
       deserializeArgfromHex(
@@ -397,47 +397,47 @@ export class ABICoder {
         }),
         hexTemplateArgs,
       ),
-    )
+    );
 
-    return new FunctionCall(name, { contract, unlockingScript: script, args: args })
+    return new FunctionCall(name, { contract, unlockingScript: script, args: args });
   }
 
   encodeParams(args: SupportedParamType[], paramsEntitys: ParamEntity[]): string {
-    return args.map((arg, i) => this.encodeParam(arg, paramsEntitys[i])).join('')
+    return args.map((arg, i) => this.encodeParam(arg, paramsEntitys[i])).join('');
   }
 
   encodeParamArray(args: SupportedParamType[], arrayParam: ParamEntity): string {
     return flatternArray(args, arrayParam.name, arrayParam.type)
       .map((arg) => {
-        return this.encodeParam(arg.value, { name: arg.name, type: this.resolver.resolverType(arg.type).finalType })
+        return this.encodeParam(arg.value, { name: arg.name, type: this.resolver.resolverType(arg.type).finalType });
       })
-      .join('')
+      .join('');
   }
 
   encodeParam(arg: SupportedParamType, paramEntity: ParamEntity): string {
     if (isArrayType(paramEntity.type)) {
-      return this.encodeParamArray(arg as SupportedParamType[], paramEntity)
+      return this.encodeParamArray(arg as SupportedParamType[], paramEntity);
     }
 
     if (arg instanceof ScryptType) {
-      return arg.toHex()
+      return arg.toHex();
     }
 
-    const typeofArg = typeof arg
+    const typeofArg = typeof arg;
 
     if (typeofArg === 'boolean') {
-      arg = new Bool(arg as boolean)
+      arg = new Bool(arg as boolean);
     } else if (typeofArg === 'number') {
-      arg = new Int(arg as number)
+      arg = new Int(arg as number);
     } else if (typeofArg === 'bigint') {
-      arg = new Int(arg as bigint)
+      arg = new Int(arg as bigint);
     } else if (typeof arg === 'string') {
-      arg = new Int(arg as string)
+      arg = new Int(arg as string);
     } else {
       //we call checkArg before encodeParam, shouldn't get here under normal circumstances
-      throw new Error(`The value of parameter ${paramEntity.name} is unknown type: ${typeofArg}`)
+      throw new Error(`The value of parameter ${paramEntity.name} is unknown type: ${typeofArg}`);
     }
 
-    return (arg as ScryptType).toHex()
+    return (arg as ScryptType).toHex();
   }
 }
