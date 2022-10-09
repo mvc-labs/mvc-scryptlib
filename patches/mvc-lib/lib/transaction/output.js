@@ -19,7 +19,7 @@ function Output (args) {
   if (_.isObject(args)) {
     this.satoshis = args.satoshis
     if (Buffer.isBuffer(args.script)) {
-      this.setScriptFromBuffer(args.script)
+      this._scriptBuffer = args.script
     } else {
       var script
       if (_.isString(args.script) && JSUtil.isHexa(args.script)) {
@@ -38,7 +38,12 @@ Object.defineProperty(Output.prototype, 'script', {
   configurable: false,
   enumerable: true,
   get: function () {
-    return this._script
+    if (this._script) {
+      return this._script
+    } else {
+      this.setScriptFromBuffer(this._scriptBuffer)
+      return this._script
+    }
   }
 })
 
@@ -103,7 +108,7 @@ Output.prototype.toObject = Output.prototype.toJSON = function toObject () {
   var obj = {
     satoshis: this.satoshis
   }
-  obj.script = this._script.toBuffer().toString('hex')
+  obj.script = this._scriptBuffer.toString('hex')
   return obj
 }
 
@@ -112,8 +117,9 @@ Output.fromObject = function (data) {
 }
 
 Output.prototype.setScriptFromBuffer = function (buffer) {
+  this._scriptBuffer = buffer
   try {
-    this._script = Script.fromBuffer(buffer)
+    this._script = Script.fromBuffer(this._scriptBuffer)
     this._script._isOutput = true
   } catch (e) {
     if (e instanceof errors.Script.InvalidBuffer) {
@@ -126,10 +132,12 @@ Output.prototype.setScriptFromBuffer = function (buffer) {
 
 Output.prototype.setScript = function (script) {
   if (script instanceof Script) {
+    this._scriptBuffer = script.toBuffer()
     this._script = script
     this._script._isOutput = true
   } else if (_.isString(script)) {
     this._script = Script.fromString(script)
+    this._scriptBuffer = this._script.toBuffer()
     this._script._isOutput = true
   } else if (Buffer.isBuffer(script)) {
     this.setScriptFromBuffer(script)
@@ -143,6 +151,8 @@ Output.prototype.inspect = function () {
   var scriptStr
   if (this.script) {
     scriptStr = this.script.inspect()
+  } else {
+    scriptStr = this._scriptBuffer.toString('hex')
   }
   return '<Output (' + this.satoshis + ' sats) ' + scriptStr + '>'
 }
@@ -164,7 +174,7 @@ Output.prototype.toBufferWriter = function (writer) {
     writer = new BufferWriter()
   }
   writer.writeUInt64LEBN(this._satoshisBN)
-  var script = this._script.toBuffer()
+  var script = this._scriptBuffer
   writer.writeVarintNum(script.length)
   writer.write(script)
   return writer

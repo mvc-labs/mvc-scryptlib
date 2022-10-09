@@ -89,8 +89,9 @@ var sighashPreimageForForkId = function (transaction, sighashType, inputNumber, 
   }
 
   var writer = new BufferWriter()
+
   // Version
-  writer.writeUInt32LE(transaction.version)
+  writer.writeInt32LE(transaction.version)
 
   // Input prevouts/nSequence (none/all, depending on flags)
   writer.write(hashPrevouts)
@@ -101,9 +102,8 @@ var sighashPreimageForForkId = function (transaction, sighashType, inputNumber, 
   writer.writeUInt32LE(input.outputIndex)
 
   // scriptCode of the input (serialized as scripts inside CTxOuts)
-  var subscriptBuffer = subscript.toBuffer()
-  writer.writeVarintNum(subscriptBuffer.length)
-  writer.write(subscriptBuffer)
+  writer.writeVarintNum(subscript.toBuffer().length)
+  writer.write(subscript.toBuffer())
 
   // value of the output spent by this input (8-byte little endian)
   writer.writeUInt64LEBN(satoshisBN)
@@ -120,6 +120,7 @@ var sighashPreimageForForkId = function (transaction, sighashType, inputNumber, 
 
   // sighashType
   writer.writeUInt32LE(sighashType >>> 0)
+
   var buf = writer.toBuffer()
   return buf
 }
@@ -144,6 +145,12 @@ var sighashPreimage = function sighashPreimage (transaction, sighashType, inputN
     flags = DEFAULT_SIGN_FLAGS
   }
 
+  // Copy transaction
+  var txcopy = Transaction.shallowCopy(transaction)
+
+  // Copy script
+  subscript = new Script(subscript)
+
   if (flags & Interpreter.SCRIPT_ENABLE_REPLAY_PROTECTION) {
     // Legacy chain's value for fork id must be of the form 0xffxxxx.
     // By xoring with 0xdead, we ensure that the value will be different
@@ -154,14 +161,8 @@ var sighashPreimage = function sighashPreimage (transaction, sighashType, inputN
   }
 
   if ((sighashType & Signature.SIGHASH_FORKID) && (flags & Interpreter.SCRIPT_ENABLE_SIGHASH_FORKID)) {
-    return sighashPreimageForForkId(transaction, sighashType, inputNumber, subscript, satoshisBN)
+    return sighashPreimageForForkId(txcopy, sighashType, inputNumber, subscript, satoshisBN)
   }
-
-  // Copy transaction
-  var txcopy = Transaction.shallowCopy(transaction)
-
-  // Copy script
-  subscript = new Script(subscript)
 
   // For no ForkId sighash, separators need to be removed.
   subscript.removeCodeseparators()

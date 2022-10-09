@@ -1,6 +1,6 @@
 'use strict'
 
-var _ = require('./_')
+var _ = require('../util/_')
 var $ = require('./preconditions')
 
 /**
@@ -10,7 +10,7 @@ var $ = require('./preconditions')
  * @param {string} value
  * @return {boolean} true if the string is the hexa representation of a number
  */
-var isHexa = function isHexa(value) {
+var isHexa = function isHexa (value) {
   if (!_.isString(value)) {
     return false
   }
@@ -28,7 +28,7 @@ module.exports = {
    * @param {string} arg
    * @return {Object|boolean} false if the argument is not a JSON string.
    */
-  isValidJSON: function isValidJSON(arg) {
+  isValidJSON: function isValidJSON (arg) {
     var parsed
     if (!_.isString(arg)) {
       return false
@@ -38,7 +38,7 @@ module.exports = {
     } catch (e) {
       return false
     }
-    if (typeof parsed === 'object') {
+    if (typeof (parsed) === 'object') {
       return true
     }
     return false
@@ -53,12 +53,12 @@ module.exports = {
    * @param {Object} values - An object of properties
    * @return {Object} The target object
    */
-  defineImmutable: function defineImmutable(target, values) {
+  defineImmutable: function defineImmutable (target, values) {
     Object.keys(values).forEach(function (key) {
       Object.defineProperty(target, key, {
         configurable: false,
         enumerable: true,
-        value: values[key],
+        value: values[key]
       })
     })
     return target
@@ -69,8 +69,11 @@ module.exports = {
    * @param {*} value
    * @return {Boolean}
    */
-  isNaturalNumber: function isNaturalNumber(value) {
-    return typeof value === 'number' && isFinite(value) && Math.floor(value) === value && value >= 0
+  isNaturalNumber: function isNaturalNumber (value) {
+    return typeof value === 'number' &&
+      isFinite(value) &&
+      Math.floor(value) === value &&
+      value >= 0
   },
 
   /**
@@ -79,10 +82,10 @@ module.exports = {
    * @param {number} integer
    * @return {Buffer}
    */
-  integerAsBuffer: function integerAsBuffer(integer) {
+  integerAsBuffer: function integerAsBuffer (integer) {
     $.checkArgumentType(integer, 'number', 'integer')
     const buf = Buffer.allocUnsafe(4)
     buf.writeUInt32BE(integer, 0)
     return buf
-  },
+  }
 }

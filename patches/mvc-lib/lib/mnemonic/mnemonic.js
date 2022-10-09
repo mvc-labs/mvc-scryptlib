@@ -1,17 +1,17 @@
 'use strict'
 
-var bsv = require('../../')
-var BN = bsv.crypto.BN
+var mvc = require('../../')
+var BN = mvc.crypto.BN
 var unorm = require('unorm')
-var _ = bsv.deps._
+var _ = mvc.deps._
 
 var pbkdf2 = require('./pbkdf2')
 var errors = require('./errors')
 
-var Hash = bsv.crypto.Hash
-var Random = bsv.crypto.Random
+var Hash = mvc.crypto.Hash
+var Random = mvc.crypto.Random
 
-var $ = bsv.util.preconditions
+var $ = mvc.util.preconditions
 
 /**
  * This is an immutable class that represents a BIP39 Mnemonic code.
@@ -53,7 +53,7 @@ var Mnemonic = function (data, wordlist) {
   } else if (_.isNumber(data)) {
     ent = data
   } else if (data) {
-    throw new bsv.errors.InvalidArgument('data', 'Must be a Buffer, a string or an integer')
+    throw new mvc.errors.InvalidArgument('data', 'Must be a Buffer, a string or an integer')
   }
   ent = ent || 128
 
@@ -73,7 +73,7 @@ var Mnemonic = function (data, wordlist) {
     throw new errors.InvalidMnemonic(phrase)
   }
   if (ent % 32 !== 0 || ent < 128) {
-    throw new bsv.errors.InvalidArgument('ENT', 'Values must be ENT > 128 and ENT % 32 == 0')
+    throw new mvc.errors.InvalidArgument('ENT', 'Values must be ENT > 128 and ENT % 32 == 0')
   }
 
   phrase = phrase || Mnemonic._mnemonic(ent, wordlist)
@@ -211,7 +211,7 @@ Mnemonic.fromSeed = function (seed, wordlist) {
  */
 Mnemonic.prototype.toHDPrivateKey = function (passphrase, network) {
   var seed = this.toSeed(passphrase)
-  return bsv.HDPrivateKey.fromSeed(seed, network)
+  return mvc.HDPrivateKey.fromSeed(seed, network)
 }
 
 /**
@@ -299,6 +299,6 @@ Mnemonic._entropyChecksum = function (entropy) {
   return checksum
 }
 
-Mnemonic.bsv = bsv
+Mnemonic.mvc = mvc
 
 module.exports = Mnemonic

@@ -214,10 +214,7 @@ BlockHeader.prototype.getTargetDifficulty = function getTargetDifficulty (bits) 
   return target
 }
 
-/**
- * @link https://en.bitcoin.it/wiki/Difficulty
- * @return {Number}
- */
+
 BlockHeader.prototype.getDifficulty = function getDifficulty () {
   var difficulty1TargetBN = this.getTargetDifficulty(GENESIS_BITS).mul(new BN(Math.pow(10, 8)))
   var currentTargetBN = this.getTargetDifficulty()

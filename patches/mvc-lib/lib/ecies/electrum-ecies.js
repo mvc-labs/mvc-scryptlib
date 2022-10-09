@@ -1,11 +1,11 @@
 'use strict'
 
-var bsv = require('../../')
+var mvc = require('../../')
 
-var PublicKey = bsv.PublicKey
-var PrivateKey = bsv.PrivateKey
-var Hash = bsv.crypto.Hash
-var $ = bsv.util.preconditions
+var PublicKey = mvc.PublicKey
+var PrivateKey = mvc.PrivateKey
+var Hash = mvc.crypto.Hash
+var $ = mvc.util.preconditions
 var bitcoreECIES = require('./bitcore-ecies')
 var errors = require('./errors')
 var aesjs = require('aes-js')
@@ -60,7 +60,7 @@ var ECIES = function ECIES (opts, algorithm = 'BIE1') {
     return new ECIES(opts, algorithm)
   }
   // use ephemeral key if privateKey is not set.
-  this._privateKey = new bsv.PrivateKey()
+  this._privateKey = new mvc.PrivateKey()
   this.opts = opts || {}
   this.opts.ephemeralKey = true
 }

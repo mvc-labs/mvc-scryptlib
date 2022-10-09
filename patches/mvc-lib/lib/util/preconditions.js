@@ -1,7 +1,7 @@
 'use strict'
 
 var errors = require('../errors')
-var _ = require('./_')
+var _ = require('../util/_')
 
 module.exports = {
   checkState: function (condition, message) {
@@ -22,8 +22,7 @@ module.exports = {
         if (!buffer.Buffer.isBuffer(argument)) {
           throw new errors.InvalidArgumentType(argument, type, argumentName)
         }
-      } else if (typeof argument !== type) {
-        // eslint-disable-line
+      } else if (typeof argument !== type) { // eslint-disable-line
         throw new errors.InvalidArgumentType(argument, type, argumentName)
       }
     } else {
@@ -31,5 +30,5 @@ module.exports = {
         throw new errors.InvalidArgumentType(argument, type.name, argumentName)
       }
     }
-  },
+  }
 }

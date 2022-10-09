@@ -188,7 +188,7 @@ var STN = {
   NETWORK_MAGIC: networkMagic.stn,
   DNS_SEEDS: ['stn-seed.bitcoinsv.io'],
   PREFIX: 'stn',
-  CASHADDRPREFIX: 'bsvstn'
+  CASHADDRPREFIX: 'mvcstn'
 }
 
 var liveNetwork = {

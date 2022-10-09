@@ -47,14 +47,12 @@ Varint.prototype.fromBufferReader = function (br) {
 }
 
 Varint.prototype.fromBN = function (bn) {
-  var bw = new BufferWriter()
-  this.buf = bw.writeVarintBN(bn).toBuffer()
+  this.buf = BufferWriter().writeVarintBN(bn).concat()
   return this
 }
 
 Varint.prototype.fromNumber = function (num) {
-  var bw = new BufferWriter()
-  this.buf = bw.writeVarintNum(num).toBuffer()
+  this.buf = BufferWriter().writeVarintNum(num).concat()
   return this
 }
 

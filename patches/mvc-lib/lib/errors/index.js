@@ -39,19 +39,19 @@ var traverseRoot = function (parent, errorsDefinition) {
   return parent
 }
 
-var bsv = {}
-bsv.Error = function () {
+var mvc = {}
+mvc.Error = function () {
   this.message = 'Internal error'
   this.stack = this.message + '\n' + (new Error()).stack
 }
-bsv.Error.prototype = Object.create(Error.prototype)
-bsv.Error.prototype.name = 'bsv.Error'
+mvc.Error.prototype = Object.create(Error.prototype)
+mvc.Error.prototype.name = 'mvc.Error'
 
 var data = require('./spec')
-traverseRoot(bsv.Error, data)
+traverseRoot(mvc.Error, data)
 
-module.exports = bsv.Error
+module.exports = mvc.Error
 
 module.exports.extend = function (spec) {
-  return traverseNode(bsv.Error, spec)
+  return traverseNode(mvc.Error, spec)
 }

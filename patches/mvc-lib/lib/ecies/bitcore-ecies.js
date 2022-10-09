@@ -1,13 +1,13 @@
 'use strict'
 
-var bsv = require('../../')
+var mvc = require('../../')
 
-var PublicKey = bsv.PublicKey
-var Hash = bsv.crypto.Hash
-var $ = bsv.util.preconditions
+var PublicKey = mvc.PublicKey
+var Hash = mvc.crypto.Hash
+var $ = mvc.util.preconditions
 var aesjs = require('aes-js')
 var CBC = aesjs.ModeOfOperation.cbc
-var Random = bsv.crypto.Random
+var Random = mvc.crypto.Random
 
 var AESCBC = function AESCBC () {}
 

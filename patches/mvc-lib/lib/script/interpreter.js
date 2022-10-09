@@ -8,6 +8,7 @@ var BN = require('../crypto/bn')
 var Hash = require('../crypto/hash')
 var Signature = require('../crypto/signature')
 var PublicKey = require('../publickey')
+var cloneDeep = require('clone-deep')
 var Stack = require('./stack')
 /**
  * Bitcoin transactions contain scripts. Each input has a script called the
@@ -200,7 +201,6 @@ Interpreter.prototype.initialize = function (obj) {
   // if OP_RETURN is found in executed branches after genesis is activated,
   // we still have to check if the rest of the script is valid
   this.nonTopLevelReturnAfterGenesis = false
-  this.returned = false
 }
 
 Interpreter.prototype.set = function (obj) {
@@ -221,11 +221,15 @@ Interpreter.prototype.set = function (obj) {
 
 Interpreter.prototype.subscript = function () {
   if (this.sighashScript) {
-    return this.sighashScript.clone()
+    return new Script().set({
+      chunks: this.sighashScript.chunks
+    })
   } else {
     // Subset of script starting at the most recent codeseparator
     // CScript scriptCode(pbegincodehash, pend);
-    return Script.fromChunks(this.script.chunks.slice(this.pbegincodehash))
+    return new Script().set({
+      chunks: this.script.chunks.slice(this.pbegincodehash)
+    })
   }
 }
 
@@ -513,7 +517,7 @@ Interpreter.prototype.evaluate = function (scriptType) {
   }
 
   try {
-    while (!this.returned && this.pc < this.script.chunks.length) {
+    while (this.pc < this.script.chunks.length) {
       // fExec: if the opcode will be executed, i.e., not in a false branch
       let thisStep = { pc: this.pc, fExec: (this.vfExec.indexOf(false) === -1), opcode: Opcode.fromNumber(this.script.chunks[this.pc].opcodenum) }
 
@@ -547,7 +551,7 @@ Interpreter.prototype.evaluate = function (scriptType) {
 Interpreter.prototype._callbackStep = function (thisStep) {
   if (typeof this.stepListener === 'function') {
     try {
-      this.stepListener(thisStep)
+      this.stepListener(thisStep, cloneDeep(this.stack.rawstack, true), cloneDeep(this.altstack.rawstack, true), cloneDeep(this.stack.varStack, true))
     } catch (err) {
       console.log(`Error in Step callback:${err}`)
     }
@@ -993,7 +997,7 @@ Interpreter.prototype.step = function (scriptType) {
           if (this.vfExec.length === 0) {
             // Terminate the execution as successful. The remaining of the script does not affect the validity (even in
             // presence of unbalanced IFs, invalid opcodes etc)
-            this.returned = true
+            this.pc = this.script.chunks.length
             return true
           }
           // op_return encountered inside if statement after genesis --> check for invalid grammar
